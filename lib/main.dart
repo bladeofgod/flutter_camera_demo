@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 import 'dart:async';
 import 'capture_screen_page.dart';
+import 'package:flutter/services.dart';
 
 
 /*
@@ -52,9 +53,9 @@ class MyApp extends StatelessWidget {
       ),
       home:
       //lab 1 方案，搁置
-      //MyHomePage(title: 'Flutter Demo Home Page')
+      MyHomePage(title: 'Flutter Demo Home Page')
       //lab 2 方案  截图传送
-      CaptureScreenPage()
+      //CaptureScreenPage()
       ,
     );
   }
@@ -102,10 +103,13 @@ class _MyHomePageState extends State<MyHomePage> {
     controller.dispose();
   }
 
+  String result = "未获取结果";
+
   @override
   Widget build(BuildContext context) {
 
     return Container(
+      color: Colors.white,
       child: Column(
         children: <Widget>[
 //          AspectRatio(
@@ -126,22 +130,40 @@ class _MyHomePageState extends State<MyHomePage> {
               ],
             ),
           ),
-
           Container(
-            height: 300,
             color: Colors.white,
-            child: bytes == null ? Icon(Icons.adb,size: 100,color: Colors.green,
-            ) : Image.memory
-              (bytes,
-              fit:
-              BoxFit
-                  .cover,),
+            child: Text(result,style: TextStyle(fontSize: 20,color: Colors
+                .black),),
           ),
+
+//          Container(
+//            height: 300,
+//            color: Colors.white,
+//            child: bytes == null ? Icon(Icons.adb,size: 100,color: Colors.green,
+//            ) : Image.memory
+//              (bytes,
+//              fit:
+//              BoxFit
+//                  .cover,),
+//          ),
         ],
       ),
     );
   }
 
+  static const MethodChannel methodChannel = 
+            const MethodChannel("decode_qr_plugin");
+
+  Future<String> decodeImage(CameraImage image) async{
+
+    return await methodChannel.invokeMethod("decodeQR",
+        {"bytesY":image.planes[0].bytes,
+        "bytesU" : image.planes[1].bytes,
+        "bytesV" : image.planes[2].bytes});
+
+  }
+
+  bool isDetecting = false;
 
   void onCameraSelected(CameraDescription cameraDescription) async {
     //if (controller != null) await controller.dispose();
@@ -163,37 +185,50 @@ class _MyHomePageState extends State<MyHomePage> {
         setState(() {
 
         });
-        controller.startImageStream((CameraImage image){
-          //TODO image data
-          //https://www.jianshu.com/p/580ccd25d4ca
-          //android image format : YUV
-          print("planes 长度 ： ${image.planes.length}");
-//          Plane y = image.planes[0];
-//          Plane u = image.planes[1];
-//          Plane v = image.planes[2];
-//          List<int> uni8 = new List();
-//          y.bytes.forEach((int item){
-//            uni8.add(item);
-//          });
-//          u.bytes.forEach((item){
-//            uni8.add(item);
-//          });
-//          v.bytes.forEach((item){
-//            uni8.add(item);
-//          });
-//          uni8.addAll(y.bytes.toList());
-//          uni8.addAll(u.bytes.toList());
-//          uni8.addAll(v.bytes.toList());
-          setState(() {
-            bytes =Uint8List.fromList(
-                image.planes.map((plane){
-                  return plane.bytes;
-                }).toList()
-            ) ;
 
-          });
-
+        controller.startImageStream((image){
+          if(! isDetecting){
+            isDetecting = true;
+            decodeImage(image).then((result){
+              print("decode result : $result");
+              setState(() {
+                this.result = result;
+              });
+            });
+          }
         });
+
+//        controller.startImageStream((CameraImage image){
+//          //TODO image data
+//          //https://www.jianshu.com/p/580ccd25d4ca
+//          //android image format : YUV
+//          print("planes 长度 ： ${image.planes.length}");
+////          Plane y = image.planes[0];
+////          Plane u = image.planes[1];
+////          Plane v = image.planes[2];
+////          List<int> uni8 = new List();
+////          y.bytes.forEach((int item){
+////            uni8.add(item);
+////          });
+////          u.bytes.forEach((item){
+////            uni8.add(item);
+////          });
+////          v.bytes.forEach((item){
+////            uni8.add(item);
+////          });
+////          uni8.addAll(y.bytes.toList());
+////          uni8.addAll(u.bytes.toList());
+////          uni8.addAll(v.bytes.toList());
+////          setState(() {
+////            bytes =Uint8List.fromList(
+////                image.planes.map((plane){
+////                  return plane.bytes;
+////                }).toList()
+////            ) ;
+////
+////          });
+//
+//        });
       });
     } on CameraException catch (e) {
       showException(e);

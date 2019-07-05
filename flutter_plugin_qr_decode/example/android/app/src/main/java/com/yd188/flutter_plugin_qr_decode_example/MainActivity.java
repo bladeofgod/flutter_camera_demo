@@ -1,4 +1,4 @@
-package com.yd188.flutter_camera_demo;
+package com.yd188.flutter_plugin_qr_decode_example;
 
 import android.os.Bundle;
 import io.flutter.app.FlutterActivity;
@@ -9,6 +9,5 @@ public class MainActivity extends FlutterActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     GeneratedPluginRegistrant.registerWith(this);
-    com.yd188.flutter_camera_demo.DecodeQRPlugin.registerWith(this.registrarFor("com.yd188.flutter_camera_demo.DecodeQRPlugin"));
   }
 }
